@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+  --bg: #eef8f3;
+  --line: #d5e4db;
+  --title: #163a2d;
+  --muted: #49685b;
+  --accent: #1d7753;
+  --card-gradient: radial-gradient(
+      90% 100% at 10% 8%,
+      rgba(152, 214, 183, 0.34),
+      transparent 65%
+    ),
+    radial-gradient(
+      80% 120% at 100% 100%,
+      rgba(248, 189, 151, 0.24),
+      transparent 70%
+    );
+  font-family: 'DM Sans', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0)),
+    var(--bg);
+}
