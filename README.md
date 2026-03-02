@@ -1,16 +1,48 @@
-# React + Vite
+# Todo App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This repository is split into two separate packages: the **frontend** (React + Vite) and the **backend** (Express API).
 
-Currently, two official plugins are available:
+- `frontend/` contains the React application built with Vite. It communicates with the API via `/api` endpoints.
+- `backend/` hosts an Express server that persists todo list data to a JSON file located at `backend/data/todos.json`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Running the project
 
-## React Compiler
+After installing dependencies at the root (which uses npm workspaces to install both sides), you can:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Start both services together**
+   ```bash
+   npm run dev
+   ```
+   This will run the backend on port 3001 and the frontend on port 5173 (default). The Vite dev server proxies `/api` requests to the backend.
 
-## Expanding the ESLint configuration
+2. **Run only the frontend**
+   ```bash
+   npm run client
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. **Run only the backend**
+   ```bash
+   npm run server
+   ```
+
+4. **Build the frontend**
+   ```bash
+   npm run build
+   ```
+
+5. **Preview the production build**
+   ```bash
+   npm run preview
+   ```
+
+### Backend details
+
+The backend uses a simple file-based storage. All todos are read from and written to `backend/data/todos.json`. If the file does not exist it will be created automatically.
+
+### ESLint
+
+Linting is configured at the root and applies to both packages; run `npm run lint` from the root or from a workspace directory.
+
+---
+
+You can still use this as a starting template for a React + Vite application, but the code is already wired up to demonstrate a separate API layer that persists to JSON.

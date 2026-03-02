@@ -47,6 +47,23 @@
   color: var(--muted);
 }
 
+.status-banner {
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.status-banner.info {
+  background: rgba(240, 247, 243, 0.95);
+  color: #295543;
+}
+
+.status-banner.error {
+  background: #faebe7;
+  color: #a8432b;
+}
+
 .todo-form {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -67,6 +84,11 @@
 .todo-form input:focus {
   outline: 2px solid rgba(29, 119, 83, 0.35);
   outline-offset: 1px;
+}
+
+.todo-form input:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
 }
 
 .todo-form button,
@@ -91,6 +113,15 @@
 .todo-form button:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 20px rgba(29, 119, 83, 0.25);
+}
+
+.todo-form button:disabled,
+.delete-btn:disabled,
+.todo-footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .todo-toolbar {

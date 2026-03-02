@@ -1,41 +1,58 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  clearCompletedTodos,
+  createTodo,
+  deleteTodo,
+  fetchTodos,
+  updateTodo,
+} from './api'
 import './App.css'
 
 const FILTERS = ['all', 'active', 'completed']
-const STORAGE_KEY = 'react-todo-list'
-const createId = () =>
-  typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`
-
-const createTodo = (title) => ({
-  id: createId(),
-  title,
-  completed: false,
-})
 
 function App() {
-  const [todos, setTodos] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : []
-    } catch {
-      return []
-    }
-  })
+  const [todos, setTodos] = useState([])
   const [newTodo, setNewTodo] = useState('')
   const [filter, setFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos))
-  }, [todos])
+    let ignore = false
+
+    const loadTodos = async () => {
+      try {
+        const items = await fetchTodos()
+
+        if (!ignore) {
+          setTodos(items)
+          setError('')
+        }
+      } catch (loadError) {
+        if (!ignore) {
+          setError(loadError.message)
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadTodos()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const remainingCount = useMemo(
     () => todos.filter((todo) => !todo.completed).length,
     [todos],
   )
-
   const completedCount = todos.length - remainingCount
+  const isBusy = loading || saving
 
   const filteredTodos = useMemo(() => {
     if (filter === 'active') {
@@ -49,7 +66,20 @@ function App() {
     return todos
   }, [filter, todos])
 
-  const handleSubmit = (event) => {
+  const runMutation = async (action) => {
+    setSaving(true)
+    setError('')
+
+    try {
+      await action()
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSubmit = async (event) => {
     event.preventDefault()
     const title = newTodo.trim()
 
@@ -57,24 +87,37 @@ function App() {
       return
     }
 
-    setTodos((current) => [createTodo(title), ...current])
-    setNewTodo('')
+    await runMutation(async () => {
+      const createdTodo = await createTodo(title)
+      setTodos((current) => [createdTodo, ...current])
+      setNewTodo('')
+    })
   }
 
-  const handleToggleTodo = (id) => {
-    setTodos((current) =>
-      current.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo,
-      ),
-    )
+  const handleToggleTodo = async (todo) => {
+    await runMutation(async () => {
+      const updatedTodo = await updateTodo(todo.id, {
+        completed: !todo.completed,
+      })
+
+      setTodos((current) =>
+        current.map((item) => (item.id === todo.id ? updatedTodo : item)),
+      )
+    })
   }
 
-  const handleDeleteTodo = (id) => {
-    setTodos((current) => current.filter((todo) => todo.id !== id))
+  const handleDeleteTodo = async (id) => {
+    await runMutation(async () => {
+      await deleteTodo(id)
+      setTodos((current) => current.filter((todo) => todo.id !== id))
+    })
   }
 
-  const handleClearCompleted = () => {
-    setTodos((current) => current.filter((todo) => !todo.completed))
+  const handleClearCompleted = async () => {
+    await runMutation(async () => {
+      const remainingTodos = await clearCompletedTodos()
+      setTodos(remainingTodos)
+    })
   }
 
   return (
@@ -83,7 +126,7 @@ function App() {
         <header className="todo-header">
           <p className="kicker">React Productivity</p>
           <h1>Todo Board</h1>
-          <p className="subtitle">Capture tasks, keep focus, finish clean.</p>
+          <p className="subtitle">Simple React UI backed by a local JSON API.</p>
         </header>
 
         <form className="todo-form" onSubmit={handleSubmit}>
@@ -97,9 +140,15 @@ function App() {
             onChange={(event) => setNewTodo(event.target.value)}
             placeholder="Write a task..."
             autoComplete="off"
+            disabled={isBusy}
           />
-          <button type="submit">Add</button>
+          <button type="submit" disabled={isBusy}>
+            {saving ? 'Saving...' : 'Add'}
+          </button>
         </form>
+
+        {error ? <p className="status-banner error">{error}</p> : null}
+        <p className="status-banner info">Stored in `data/todos.json` through the backend API.</p>
 
         <div className="todo-toolbar">
           <div className="filters" role="tablist" aria-label="Todo filters">
@@ -122,7 +171,9 @@ function App() {
         </div>
 
         <ul className="todo-list">
-          {filteredTodos.length === 0 ? (
+          {loading ? (
+            <li className="empty-state">Loading todos from backend...</li>
+          ) : filteredTodos.length === 0 ? (
             <li className="empty-state">
               {todos.length === 0
                 ? 'No tasks yet. Add your first one.'
@@ -135,7 +186,8 @@ function App() {
                   <input
                     type="checkbox"
                     checked={todo.completed}
-                    onChange={() => handleToggleTodo(todo.id)}
+                    onChange={() => handleToggleTodo(todo)}
+                    disabled={isBusy}
                   />
                   <span>{todo.title}</span>
                 </label>
@@ -143,6 +195,7 @@ function App() {
                   type="button"
                   className="delete-btn"
                   onClick={() => handleDeleteTodo(todo.id)}
+                  disabled={isBusy}
                 >
                   Delete
                 </button>
@@ -156,7 +209,7 @@ function App() {
           <button
             type="button"
             onClick={handleClearCompleted}
-            disabled={completedCount === 0}
+            disabled={isBusy || completedCount === 0}
           >
             Clear completed
           </button>
