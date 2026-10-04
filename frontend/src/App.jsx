@@ -276,7 +276,7 @@ function App() {
           </div>
 
           <p className="stats">
-            {remainingCount} left | {completedCount} done
+            {remainingCount} left dshb | {completedCount} done
           </p>
         </div>
 
